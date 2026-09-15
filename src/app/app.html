@@ -1,0 +1,301 @@
+<header>
+  <a class="brand" href="#" (click)="$event.preventDefault(); navigate('home')"
+    ><span class="brand-icon">म</span
+    ><span>MahaMatrimony<small>मन जुळू दे. नाती फुलू दे.</small></span></a
+  >
+  <nav aria-label="Main navigation">
+    <button (click)="navigate('home')">Home</button>
+    @if (backend.user()) {
+      <button (click)="navigate('members')">Discover</button
+      ><button (click)="navigate('profile')">My profile</button>
+      @if (backend.admin()) {
+        <button (click)="navigate('admin')">Admin reviews</button>
+      }
+      <button [disabled]="busy()" (click)="logout()">Sign out</button>
+    } @else {
+      <button class="outline" (click)="page.set('login'); signup = false">Sign in</button>
+    }
+  </nav>
+</header>
+@if (!backend.client) {
+  <div class="setup">
+    LOCAL PREVIEW · Account features will activate after Supabase is connected. No real profiles are
+    displayed.
+  </div>
+}
+@if (message()) {
+  <div class="notice" role="status">{{ message() }}</div>
+}
+@if (busy()) {
+  <div class="progress" role="status">Working…</div>
+}
+<main>
+  @if (page() === 'home') {
+    <section class="hero">
+      <div>
+        <span class="eyebrow">MARATHI ROOTS. SHARED TOMORROWS.</span>
+        <h1>A meaningful connection.<br /><em>A new beginning.</em></h1>
+        <p>
+          A thoughtful space for Marathi individuals and families to find a life partner. Every
+          profile is reviewed by our admin before it becomes visible.
+        </p>
+        <div class="actions">
+          <button
+            class="primary"
+            (click)="backend.user() ? navigate('profile') : page.set('login'); signup = true"
+          >
+            Create your free profile <span>↗</span></button
+          ><a href="#how">How it works ↓</a>
+        </div>
+        <div class="trust">
+          <span>✓ Admin-reviewed profiles</span><span>✓ Free during launch</span
+          ><span>✓ Private member access</span>
+        </div>
+      </div>
+      <div class="art" aria-hidden="true">
+        <div class="arch">
+          <span class="flower">✽</span><span class="marathi">शुभारंभ</span
+          ><span class="art-line">Two stories. One beautiful beginning.</span>
+          <div class="rings"><i></i><i></i></div>
+        </div>
+        <div class="art-note">Rooted in culture.<br />Built around you.</div>
+      </div>
+    </section>
+    <section id="how" class="steps">
+      <div>
+        <span class="eyebrow">YOUR JOURNEY STARTS HERE</span>
+        <h2>Simple steps. Thoughtful introductions.</h2>
+      </div>
+      <div class="step-grid">
+        <article>
+          <b>01</b>
+          <h3>Tell your story</h3>
+          <p>Create your profile and add up to five photos that feel like you.</p>
+        </article>
+        <article>
+          <b>02</b>
+          <h3>A personal review</h3>
+          <p>Your profile stays private while our admin checks your submission.</p>
+        </article>
+        <article>
+          <b>03</b>
+          <h3>Discover profiles</h3>
+          <p>Once approved, explore other approved members in the community.</p>
+        </article>
+      </div>
+    </section>
+    <section class="launch">
+      <div>
+        <span class="eyebrow">GROW WITH OUR COMMUNITY</span>
+        <h2>Free to join. A place to belong.</h2>
+        <p>We’re building our community first. Membership is free during launch.</p>
+      </div>
+      <button
+        class="primary"
+        (click)="page.set(backend.user() ? 'profile' : 'login'); signup = true"
+      >
+        Get started →
+      </button>
+    </section>
+  }
+  @if (page() === 'login') {
+    <section class="form-card narrow">
+      <span class="eyebrow">WELCOME TO MAHAMATRIMONY</span>
+      <h1>{{ signup ? 'Begin your story' : 'Welcome back' }}</h1>
+      <p>
+        {{
+          signup
+            ? 'Create your account, then submit your profile for admin review.'
+            : 'Sign in to manage your profile.'
+        }}
+      </p>
+      <form #authForm="ngForm" (ngSubmit)="authenticate()">
+        <label
+          >Email address<input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            autocomplete="email" /></label
+        ><label
+          >Password<input
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="8"
+            [attr.autocomplete]="signup ? 'new-password' : 'current-password'" /></label
+        ><small>Use at least 8 characters.</small
+        ><button class="primary full" [disabled]="busy() || authForm.invalid || !backend.client">
+          {{ signup ? 'Create account' : 'Sign in' }}
+        </button>
+      </form>
+      <button class="text-button" (click)="signup = !signup">
+        {{ signup ? 'Already registered? Sign in' : 'New here? Create an account' }}
+      </button>
+    </section>
+  }
+  @if (page() === 'profile' && backend.user()) {
+    <section class="form-card">
+      <span class="eyebrow">YOUR PROFILE</span>
+      <h1>Let’s get to know you.</h1>
+      <div class="status">
+        Status: {{ mine()?.status || 'Not submitted' }} · Only approved profiles appear to members.
+      </div>
+      @if (mine()?.review_note) {
+        <p>{{ mine()?.review_note }}</p>
+      }
+      <form #profileForm="ngForm" (ngSubmit)="save()">
+        <div class="fields">
+          <label
+            >Display name<input
+              name="name"
+              [(ngModel)]="form.display_name"
+              required
+              maxlength="80" /></label
+          ><label
+            >Age<input
+              type="number"
+              name="age"
+              [(ngModel)]="form.age"
+              required
+              min="18"
+              max="100" /></label
+          ><label>City<input name="city" [(ngModel)]="form.city" required maxlength="80" /></label
+          ><label
+            >Education<input
+              name="education"
+              [(ngModel)]="form.education"
+              required
+              maxlength="120" /></label
+          ><label
+            >Occupation<input
+              name="occupation"
+              [(ngModel)]="form.occupation"
+              required
+              maxlength="120"
+          /></label>
+        </div>
+        <label
+          >About you<textarea
+            name="about"
+            [(ngModel)]="form.about"
+            required
+            minlength="20"
+            maxlength="1500"
+            rows="4"
+          ></textarea>
+        </label>
+        <p class="hint">
+          Please keep phone numbers, email addresses and other contact details out of your public
+          profile. Changes require a fresh admin review.
+        </p>
+        <button class="primary" [disabled]="busy() || profileForm.invalid">
+          Submit for admin review
+        </button>
+      </form>
+      @if (mine()) {
+        <hr />
+        <h2>
+          Your photos <small>{{ photos().length }} / 5</small>
+        </h2>
+        <p>JPG, PNG or WebP, up to 10 MB each. Photos are resized before uploading.</p>
+        <div class="photos">
+          @for (photo of photos(); track photo.name) {
+            <div>
+              <img [src]="photo.url" alt="Your profile photo" /><button
+                [disabled]="busy()"
+                (click)="removePhoto(photo.name)"
+              >
+                Remove
+              </button>
+            </div>
+          }
+        </div>
+        <label
+          >Add a photo<input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            [disabled]="busy() || photos().length >= 5"
+            (change)="upload($event)"
+        /></label>
+      }
+    </section>
+  }
+  @if ((page() === 'members' || page() === 'admin') && backend.user()) {
+    <section class="directory">
+      <span class="eyebrow">{{ page() === 'admin' ? 'ADMIN WORKSPACE' : 'OUR COMMUNITY' }}</span>
+      <h1>
+        {{ page() === 'admin' ? 'Profiles awaiting your review' : 'Discover a shared tomorrow' }}
+      </h1>
+      @if (page() === 'members') {
+        <label class="filter"
+          >Filter by city<input [(ngModel)]="cityFilter" placeholder="e.g. Pune"
+        /></label>
+        @if (mine()?.status !== 'approved' && !backend.admin()) {
+          <p class="status">Your profile must be approved before you can browse members.</p>
+        }
+      }
+      <div class="member-grid">
+        @for (profile of filtered(); track profile.id) {
+          <article class="member">
+            <div class="avatar">{{ profile.display_name.charAt(0) }}</div>
+            <span class="badge">{{
+              profile.status === 'approved' ? 'Admin reviewed' : 'Awaiting review'
+            }}</span>
+            <h2>{{ profile.display_name }}</h2>
+            <p>{{ profile.age }} years · {{ profile.city }}</p>
+            <p>{{ profile.education }} · {{ profile.occupation }}</p>
+            <p>{{ profile.about }}</p>
+            <button class="outline" [disabled]="busy()" (click)="inspect(profile)">
+              View photos
+            </button>
+            @if (page() === 'admin' && backend.admin()) {
+              <div class="actions">
+                <button class="primary" [disabled]="busy()" (click)="review(profile.id, true)">
+                  Approve</button
+                ><button class="outline" [disabled]="busy()" (click)="review(profile.id, false)">
+                  Return for changes
+                </button>
+              </div>
+            }
+          </article>
+        } @empty {
+          <div class="empty">
+            <span>✽</span>
+            <h2>
+              {{ page() === 'admin' ? 'The review queue is clear' : 'A community in the making' }}
+            </h2>
+            <p>
+              {{
+                page() === 'admin'
+                  ? 'New submissions will appear here.'
+                  : 'Approved profiles will appear here as our community grows.'
+              }}
+            </p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</main>
+@if (viewing(); as view) {
+  <div class="modal-backdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-label="Profile photos">
+      <button class="outline" (click)="viewing.set(null)">Close</button>
+      <h2>{{ view.profile.display_name }}</h2>
+      <div class="photos">
+        @for (photo of view.photos; track photo.name) {
+          <img [src]="photo.url" alt="Member profile photo" />
+        } @empty {
+          <p>No photos uploaded.</p>
+        }
+      </div>
+    </section>
+  </div>
+}
+<footer>
+  <span class="brand-footer">MahaMatrimony</span><span>Marathi roots. Meaningful connections.</span
+  ><small>Free during launch · Admin review is not identity verification.</small>
+</footer>

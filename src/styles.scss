@@ -1,0 +1,17 @@
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: #fbf8f2;
+  color: #40252d;
+  font-family: Arial, 'Nirmala UI', sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+button,
+input,
+textarea {
+  font-family: inherit;
+}
